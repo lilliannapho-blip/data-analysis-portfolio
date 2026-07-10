@@ -1,3 +1,15 @@
 # data-analysis-portfolio
-My data analysis portfolio
-This folder consists of all of the coding I have done for my coursework. 
+
+Welcome
+
+This repository contains my data analysis projects using:
+-SQL
+-R
+-Jupyter Notebook
+-Data Visualization
+
+# Projects
+-IMDB Movie Review Analysis
+-Newpaper Sentiment Analysis
+-SQL queries of various product/seller information
+-WA licensing program
