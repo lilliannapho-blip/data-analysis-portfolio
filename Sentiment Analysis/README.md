@@ -4,11 +4,11 @@ This project performs sentiment analysis using comments from a newspaper vent li
 Gazette-Mail)
 
 The analysis begins by cleaning the raw text, which went in the order of
--Removing punctuation
--Removing numbers
--Removing website links
--Removing extra spaces
--Converting to lowercase
+- Removing punctuation
+- Removing numbers
+- Removing website links
+- Removing extra spaces
+- Converting to lowercase
 
 The cleaned text is analyzed using the NRC Emotion Lexicon from the syuzhet package.
 

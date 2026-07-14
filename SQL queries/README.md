@@ -8,31 +8,31 @@ The goal of this project was to practice database querying techniques and demons
 
 The queries include the use of:
 
--INNER JOIN – Combining related records between tables where matching values exist
--LEFT JOIN – Retrieving all records from one table while including matching records from another table
--GROUP BY – Aggregating data to summarize information by categories
+- INNER JOIN – Combining related records between tables where matching values exist
+- LEFT JOIN – Retrieving all records from one table while including matching records from another table
+- GROUP BY – Aggregating data to summarize information by categories
 
 Aggregate functions:
--COUNT()
--SUM()
--AVG()
--MAX()
--MIN()
--WHERE clauses – Filtering data based on specific conditions
--ORDER BY – Sorting query results
--Subqueries – Using nested queries to perform more complex analysis
+- COUNT()
+- SUM()
+- AVG()
+- MAX()
+- MIN()
+- WHERE clauses – Filtering data based on specific conditions
+- ORDER BY – Sorting query results
+- Subqueries – Using nested queries to perform more complex analysis
 
 # AdventureWorks Database
 
 Queries analyze data involving:
--Customers
--Resellers
--Product Categories
--Products
--Amount in Sales
--Date purchased
+- Customers
+- Resellers
+- Product Categories
+- Products
+- Amount in Sales
+- Date purchased
 
 # Example questions answered
--Find the average list price for the accessory category
--List all customers and the most recent date they placed an order
--List all resellers and total sales amount for each
+- Find the average list price for the accessory category
+- List all customers and the most recent date they placed an order
+- List all resellers and total sales amount for each
