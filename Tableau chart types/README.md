@@ -30,7 +30,7 @@ The  dataset includes information such as:
 - Profit
 
 ## Visualizations created
-The chart types that were created using difefrent dimensions and metrics include:
+The chart types that were created using different dimensions and metrics include:
 - Box plot of discounts by region
 - Bullet graph of tourism outbound by region
 - Density chart of average life expectancy of a female and the average infant mortality rate
