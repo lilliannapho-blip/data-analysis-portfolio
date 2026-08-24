@@ -5,8 +5,9 @@ Welcome
 This repository contains my data analysis projects using:
 - SQL
 - R
-- Jupyter Notebook
+- Python/Jupyter Notebook
 - Data Visualization
+- Excel
 
 # Projects
 - IMDB Movie Review Analysis
@@ -18,3 +19,4 @@ This repository contains my data analysis projects using:
 - Excel VLOOKUP Function
 - Research Paper on Spending Trend in the US
 - Spotify Song Popularity Analysis
+- Coca Cola Digital Marketing Analysis
