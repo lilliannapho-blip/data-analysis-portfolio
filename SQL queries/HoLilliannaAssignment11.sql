@@ -3,16 +3,9 @@
 --You are to develop SQL statements for each task listed.  
 --You should type your SQL statements under each task.  
 
-/*	Submit your .sql file named with your last name, first name and assignment # (e.g., SuneelPratimaAssignment11.sql). 
-	Submit your file to the instructor through the course site.  
-	
-	Class standard: All KEYWORDS such as SELECT, FROM, WHERE, INNER JOIN and so on must be in all capital letters and on separate lines. */
-
-
 --  It is your responsibility to provide a meaningful column name for the return value of the function 
 --  and use an appropriate sort order
 	
-
 USE AdventureWorksDW2012;
 
 --1.	Display a count of resellers by country
