@@ -1,16 +1,14 @@
 
-
+# Install packages to be able to run a sentiment analysis
 install.packages(c("wordcloud", "RColorBrewer", "tm", "dplyr"))
 install.packages("SnowballC") 
-
-
 install.packages(c(
 "tidytext",
 "syuzhet",
 "sentimentr"
 ))
 
-
+# Load the necessary libraries
 library(tidytext)
 library(syuzhet)
 library(sentimentr)
@@ -19,10 +17,11 @@ library(SnowballC)
 library(wordcloud)
 library(RColorBrewer)
 
+# Load reviews into a text dataset to analyze
 textdata <- readLines("https://www.r-bloggers.com/wp-content/uploads/2016/01/vent.txt")
 textdata <- textdata[textdata != ""]
 
-
+# Remove punctuation, numerical digits and other parts of reviews that are not text only
 clean_text <- textdata %>%
   str_replace_all("[[:punct:]]", " ") %>%
   str_replace_all("[[:digit:]]", " ") %>%
@@ -32,7 +31,8 @@ clean_text <- textdata %>%
   tolower()
 
 
-
+# Identify the dominant emotion for each text entry using the NRC sentiment lexicon.
+# Entries with no detected emotional words are classified as "unknown".
 nrc_df <- syuzhet::get_nrc_sentiment(clean_text)
 emotion <- nrc_df %>%
   select(anger:trust) %>%
@@ -41,6 +41,8 @@ emotion <- nrc_df %>%
 emotion[apply(nrc_df[,1:8], 1, sum) == 0] <- "unknown"
 
 
+# Calculate sentiment scores for each text and classify each entry
+# as positive, negative, or neutral based on the polarity score.
 pol_df <- sentiment(clean_text)
 polarity <- ifelse(
   pol_df$sentiment > 0, "positive",
@@ -48,6 +50,9 @@ polarity <- ifelse(
 )
 
 
+# Combine the text, emotion, and polarity results into a single data frame.
+# Convert emotion to a factor and order the categories by frequency,
+# with the most common emotion appearing first.
 sent_df <- tibble(
 text = clean_text,
 emotion = emotion,
@@ -59,6 +64,9 @@ sent_df$emotion <- factor(
 )
 
 
+# Create a bar chart showing the frequency of each emotion category.
+# Different colors are used to distinguish the emotion categories,
+# and a minimal theme is applied for a clean presentation.
 ggplot(sent_df, aes(x = emotion, fill = emotion)) +
   geom_bar() +
   scale_fill_brewer(palette = "Dark2") +
@@ -69,6 +77,7 @@ ggplot(sent_df, aes(x = emotion, fill = emotion)) +
 #we can use this to focus more on the trust aspect
 
 
+# Create similar bar chart but showing the frequency of each polarity
 ggplot(sent_df, aes(x = polarity, fill = polarity)) +
   geom_bar() +
   scale_fill_brewer(palette = "RdGy") +
@@ -78,6 +87,10 @@ ggplot(sent_df, aes(x = polarity, fill = polarity)) +
 #This tells us that whatever we are trying to sell has more of a negative sentiment than a positive
 #even though it's almost 50/50, we can see that the negative text has overcome the positive
 
+
+# Combine text entries by emotion and remove common English stop words.
+# Create a term-document matrix and use it to generate a comparison
+# word cloud showing the words associated with each emotion.
 emos <- unique(sent_df$emotion)
 emo_docs <- map_chr(emos, ~ paste(sent_df$text[sent_df$emotion == .x], collapse = " "))
 emo_docs_clean <- removeWords(emo_docs, stopwords("english"))
