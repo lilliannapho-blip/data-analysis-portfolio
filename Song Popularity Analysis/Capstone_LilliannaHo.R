@@ -1,20 +1,29 @@
-#linear model
+# load libraries
+library(tidymodels)
+library(tidyverse)
+library(tidytext)
+library(readxl)
+library(dyplr)
 
+# read file with song data that is used for training
 path <- "C:/Users/thy phan/Desktop/R LAB FILES/train.csv"
 song_data <- read.csv(path) %>% 
   as_tibble()
 
+
+# create a subset to remove valence, liveness and acousticness of the songs
 clean_data <- subset(song_data, select = -c(valence, liveness, acousticness))
 
 
-
+# create an upper and lower quantile to filter out outlier for danceability
 Q1_d <- quantile(clean_data$danceability, 0.25)
 Q3_d <- quantile(clean_data$danceability, 0.75)
 IQR_d <- Q3_d - Q1_d
 lower_d <- Q1_d - 1.5 * IQR_d
-upper_d <- Q3_d + 1.5 * IQR_d  # corrected: use `+`, not another `-`
+upper_d <- Q3_d + 1.5 * IQR_d 
 
-# Tempo bounds
+
+# remove outliers for Tempo bounds
 Q1_t <- quantile(clean_data$tempo, 0.25)
 Q3_t <- quantile(clean_data$tempo, 0.75)
 IQR_t <- Q3_t - Q1_t
@@ -22,54 +31,45 @@ lower_t <- Q1_t - 1.5 * IQR_t
 upper_t <- Q3_t + 1.5 * IQR_t
 
 
-
-
-
-
-
-
-# Filtered data
+# filter the data by using over values greater than the lower quantile and
+#lower than the upper quantile
 filtered_data <- clean_data %>%
   filter(
     danceability >= lower_d & danceability <= upper_d,
     tempo >= lower_t & tempo <= upper_t
   )
 
+# check distrbution of desired variables
+hist(filtered_data$speechiness)
+hist(filtered_data$danceability)
+hist(filtered_data$speechiness)
 
-
-
-
-
-#transforming data 
+# take log of duration due to positive skew of data
 newduration <- log10(filtered_data$duration_ms)
 hist(newduration)
 hist(filtered_data$duration_ms)
 
+# take the sqr rt of the maximum value and reflect the data due to moderate negative skew
 max_energy <- max(filtered_data$energy)
 newenergy <- sqrt(max_energy - filtered_data$energy)
 hist(newenergy)
 hist(filtered_data$energy)
 
+# take log and reflect data due to negative skew
 max_loudness <- max(filtered_data$loudness)
 newloudness <- log10(max_loudness - filtered_data$loudness)
 hist(newloudness)
 
+# take the inverse due to extreme positive skew
 newspeechiness <- 1/(filtered_data$speechiness)
+
+#check transformed distrbution
 hist(newspeechiness)
-hist(filtered_data$speechiness)
+hist(newduration)
+hist(newenergy)
+hist(newloudness)
 
-
-
-
-
-hist(filtered_data$danceability)
-
-hist(filtered_data$speechiness)
-
-
-
-
-
+#add in new variables to filtered dataset while keeping the originals
 transformed_data <- filtered_data %>%
   mutate(
     newduration = log10(duration_ms),
@@ -80,6 +80,7 @@ transformed_data <- filtered_data %>%
 
 
 
+#remove rows with invalid values
 clean_data1 <- transformed_data[
   is.finite(transformed_data$newspeechiness) &
     is.finite(transformed_data$newduration) &
@@ -87,7 +88,10 @@ clean_data1 <- transformed_data[
 ]
 
 
+#creating linear model for explicit dimension 
 
+#make a subset for songs that are explicit and one for songs that are not to 
+#analyze if there is a relationship between song popularity and explicitness 
 explicitT <- subset(clean_data1, explicit == "True")
 explicitF <- subset(clean_data1, explicit == "False")
 
@@ -96,75 +100,75 @@ model <- lm(popularity ~ newloudness+  newspeechiness  +  newenergy+
            newduration  +track_genre  , data = explicitT)
 summary(model)
 
+#get residuals
 res <- residuals(model)
 
+#test residuals for normality
 qqnorm(res)
 qqline(res, col="red")
 
 
-
 #Linear Model for Explicit:False
-
 model2 <- lm(popularity ~  newloudness+ newspeechiness + newenergy 
              + newduration + danceability + tempo + track_genre
              , data = explicitF)
 summary(model2)
 
+#get residuals
 res2 <- residuals(model2)
 
+#test residuals for normality
 qqnorm(res2)
 qqline(res2, col="red")
 
-
+#run influence and outlier diagnostics on model where explicit is true
+#check leverage for each observation to check for unusual values
 leverage <- hatvalues(model)
+#find observations with large and reasonable leverage
 which(abs(stud_res) > 3 & leverage < 2*mean(leverage))
 
+#find studentized residuals to easily identify unusual observations
 stud_res <- rstudent(model)
 which(abs(stud_res) > 3)
+
+#plot the residuals
 plot(stud_res, 
      ylab = "Studentized Residuals", 
      xlab = "Observation Index", 
      main = "Studentized Residuals Plot")
 abline(h = c(-3, 0, 3), col = c("red", "blue", "red"), lty = 2)
 
+#create histogram to see distribution of residuals
 hist(stud_res, breaks = 30, main = "Histogram of Studentized Residuals",
      xlab = "Studentized Residuals")
 
 
-
-
-
+#calculate cooks distance to identify observations that may have a large affect on the model
 cooksd <- cooks.distance(model)
+#plot the cook's distances
 plot(cooksd, pch = 16)
 
-# Influence threshold
+# identify distances greater than 4/n (influence threshold)
 which(cooksd > 4 / length(cooksd))
 
-
+#show the 20 largest distances
 head(sort(cooksd, decreasing = TRUE), 20)
 
 
-
+#repeat process for model where explicit is true
 stud_res2 <- rstudent(model2)
 which(abs(stud_res2) > 3)
 
 cooksd2 <- cooks.distance(model2)
 plot(cooksd, pch = 16)
 
-# Influence threshold
 which(cooksd > 4 / length(cooksd2))
-
 
 head(sort(cooksd2, decreasing = TRUE), 20)
 
 
-
-
-
-
-# Random Forest Model 
-
-
+# Random Forest Model for explicit:false
+#install necessary packages and run libraroes
 install.packages("randomForest")
 library(randomForest)
 install.packages("ranger")
@@ -173,15 +177,16 @@ suppressPackageStartupMessages({
   library(car)
   library(ranger)
 })
-          
 
 
-
+#set the seed to split the data into 70/30 training and testing data
 set.seed(123)
 train_index <- sample(1:nrow(explicitF), 0.7*nrow(explicitF))
 train <- explicitF[train_index, ]
 test  <- explicitF[-train_index, ]
 
+
+#run the random forest model on the training set
 rf_model <- ranger(
   popularity ~ newduration + danceability + newspeechiness +newenergy+ tempo+ newloudness+ track_genre, 
   data = train,
@@ -190,12 +195,10 @@ rf_model <- ranger(
   importance = "impurity"
 )
 
-
-
-
+#record predictions
 rf_pred <- predict(rf_model, data = test)$predictions
 
-
+#get the rmse and r-sqaured value for performance metrics
 rmse_value <- Metrics::rmse(test$popularity, rf_pred)
 rmse_value
 
@@ -204,8 +207,7 @@ r2_value
 
 
 
-
-#random forest model for 2nd dataset
+#random forest model for explicit:true
 
 set.seed(123)
 train_index2 <- sample(1:nrow(explicitT), 0.7*nrow(explicitT))
@@ -223,17 +225,14 @@ rf_model2 <- ranger(
 rf_model2
 rf_pred2 <- predict(rf_model2, data = test2)$predictions
 
-
 rmse_value2 <- Metrics::rmse(test2$popularity, rf_pred2)
 rmse_value2
 
 r2_value2 <- 1 - sum((test2$popularity - rf_pred2)^2) / sum((test2$popularity - mean(test2$popularity))^2)
 r2_value2
 
-mae <- mean(abs(rf_pred2 - test2$popularity))
-mae
 
-
+#create a plot of the most important variables for non-explicit songs
 library(ggplot2)
 importance_df <- data.frame(
   Feature = names(rf_model$variable.importance),
@@ -246,8 +245,7 @@ ggplot(importance_df, aes(x = reorder(Feature, Importance), y = Importance)) +
 
 
 
-
-library(ggplot2)
+#create a plot of the most important variables for non-explicit songs
 importance_df <- data.frame(
   Feature = names(rf_model2$variable.importance),
   Importance = rf_model2$variable.importance
@@ -258,22 +256,8 @@ ggplot(importance_df, aes(x = reorder(Feature, Importance), y = Importance)) +
   labs(title = "Variable Importance")
 
 
-ggplot(data = data.frame(
-  Observed = test2$popularity,
-  Predicted = rf_pred2
-), aes(x = Observed, y = Predicted)) +
-  geom_point(color = "steelblue", alpha = 0.6) +
-  geom_abline(intercept = 0, slope = 1, color = "red", linetype = "dashed") +
-  theme_minimal() +
-  labs(title = "Predicted vs Observed",
-       x = "Observed Popularity",
-       y = "Predicted Popularity")
 
-
-
-
-
-
+#run LightGBM model on explicit:false
 
 install.packages("lightgbm", repos = "https://cran.r-project.org")
 library(lightgbm)
@@ -285,7 +269,7 @@ y <- explicitF$popularity
 
 x <- data.matrix(x)
 
-#train/test model
+#train/test model (80/20 split)
 set.seed(123)
 train_idx <- sample(1:nrow(x), size = 0.8 * nrow(x))
 
@@ -350,7 +334,7 @@ lgb.plot.importance(importance, top_n = 20)
 
 
 
-#for true
+#run lightGBM model for explicit:true
 x2 <- explicitT[, c("newduration", "newloudness", "danceability", "newspeechiness", 
                    "newenergy", "tempo", "track_genre")]
 y2 <- explicitT$popularity
@@ -421,6 +405,20 @@ rsqlg2
 
 importance2 <- lgb.importance(lgbmodel2, percentage = TRUE)
 lgb.plot.importance(importance2, top_n = 20)
+
+
+
+#validate model by creating a plot with predicted vs observed values using the best model
+ggplot(data = data.frame(
+  Observed = test2$popularity,
+  Predicted = rf_pred2
+), aes(x = Observed, y = Predicted)) +
+  geom_point(color = "steelblue", alpha = 0.6) +
+  geom_abline(intercept = 0, slope = 1, color = "red", linetype = "dashed") +
+  theme_minimal() +
+  labs(title = "Predicted vs Observed",
+       x = "Observed Popularity",
+       y = "Predicted Popularity")
 
 
 
